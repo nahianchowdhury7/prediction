@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Result Entry | EL Clasico Football Arena</title>
+<style>
+  :root{
+    --pitch-dark: #04140d;
+    --gold: #d4af37;
+    --gold-bright: #f3d568;
+    --paper: #f4f1e6;
+    --slot-empty: #0f2c1c;
+    --slot-border: #1f4a30;
+    --text-dim: #7fa088;
+    --danger: #d4544a;
+    --success: #4ca36a;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background: var(--pitch-dark);
+    color: var(--paper);
+    font-family: 'Oswald', 'Arial Narrow', sans-serif;
+    min-height: 100vh;
+    padding: 24px 16px 80px;
+  }
+  .wrap{ max-width: 480px; margin: 0 auto; }
+  header{ text-align:center; margin-bottom: 24px; }
+  .eyebrow{
+    font-size: 11px; letter-spacing:3px; color: var(--gold);
+    text-transform:uppercase; font-weight:600;
+  }
+  h1{ font-size: 26px; letter-spacing:1px; text-transform:uppercase; margin: 6px 0 4px; }
+  .sub{ font-size:13px; color:var(--text-dim); }
+
+  /* lock screen */
+  .lock-card{
+    max-width: 320px; margin: 60px auto;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--slot-border);
+    border-radius: 14px; padding: 28px; text-align:center;
+  }
+  .lock-card .icon{ font-size:36px; margin-bottom:10px; }
+  .lock-card input{
+    width:100%; padding:12px 14px; margin-top:16px;
+    border-radius:8px; border:1px solid var(--slot-border);
+    background: rgba(0,0,0,0.25); color:var(--paper); font-size:15px; font-family:inherit;
+  }
+  .lock-card input:focus{ outline:none; border-color:var(--gold); }
+  .lock-err{ color:var(--danger); font-size:12px; margin-top:8px; display:none; }
+
+  button{
+    font-family:inherit; font-size:13px; letter-spacing:1.5px; text-transform:uppercase;
+    font-weight:700; padding:12px 22px; border-radius:8px; border:none; cursor:pointer;
+    margin-top:16px; width:100%;
+  }
+  .btn-primary{ background: var(--gold); color: var(--pitch-dark); }
+  .btn-primary:hover{ background: var(--gold-bright); }
+  .btn-primary:disabled{ background:var(--slot-border); color:var(--text-dim); cursor:not-allowed; }
+
+  /* match rows */
+  #adminApp{ display:none; }
+  .round-block{ margin-bottom: 22px; }
+  .round-block h2{
+    font-size: 12px; letter-spacing:2px; text-transform:uppercase;
+    color: var(--gold); margin-bottom: 10px;
+  }
+  .match-row{
+    display:flex; align-items:center; gap:10px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--slot-border);
+    border-radius: 8px; padding: 10px 12px; margin-bottom:8px;
+  }
+  .match-row.set{ border-color: rgba(76,163,106,0.5); background: rgba(76,163,106,0.06); }
+  .match-label{ flex:1; font-size:13px; }
+  .match-row select{
+    background: rgba(0,0,0,0.3); color: var(--paper);
+    border: 1px solid var(--slot-border); border-radius:6px;
+    padding: 7px 8px; font-family:inherit; font-size:12px;
+    max-width: 130px;
+  }
+  .status-dot{ width:8px; height:8px; border-radius:50%; background:var(--slot-border); flex-shrink:0; }
+  .match-row.set .status-dot{ background: var(--success); }
+
+  .save-bar{
+    position: sticky; bottom: 0;
+    background: var(--pitch-dark);
+    padding: 14px 0 4px;
+    border-top: 1px solid var(--slot-border);
+    margin-top: 10px;
+  }
+  .save-note{ text-align:center; font-size:12px; color:var(--text-dim); margin-top:8px; display:none; }
+  .save-note.show{ display:block; }
+  .save-note.error{ color: var(--danger); }
+  .save-note.success{ color: var(--gold-bright); }
+
+  .helper{
+    font-size:11px; color:var(--text-dim); text-align:center; margin-bottom:18px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="lock-card" id="lockCard">
+    <div class="icon">🔒</div>
+    <h1 style="font-size:18px;">Admin Access</h1>
+    <p class="sub">Enter password to manage match results</p>
+    <input type="password" id="passwordInput" placeholder="Password">
+    <div class="lock-err" id="lockErr">Wrong password, try again</div>
+    <button class="btn-primary" id="unlockBtn">Unlock</button>
+  </div>
+
+  <div id="adminApp">
+    <header>
+      <div class="eyebrow">El Clasico Football Arena</div>
+      <h1>Result Entry</h1>
+      <div class="sub">Update each match once the real result is known</div>
+    </header>
+    <div class="helper">Green dot = result already saved. You can update any match anytime.</div>
+
+    <div id="roundsContainer"></div>
+
+    <div class="save-bar">
+      <button class="btn-primary" id="saveBtn">Save Results</button>
+      <div class="save-note" id="saveNote"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const SHEET_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxd-upBGaNtgOLOxepmbIq0o2zFt5N4a-pBdGWHjxvTUZ1d5WpYOTaf-lzQAl_3WrfnfA/exec";
+const ADMIN_PASSWORD = "Predictionpass1290";
+
+const R32 = [
+  { key:'R32_1',  a:'South Africa', b:'Canada' },
+  { key:'R32_2',  a:'Brazil', b:'Japan' },
+  { key:'R32_3',  a:'Germany', b:'Paraguay' },
+  { key:'R32_4',  a:'Netherlands', b:'Morocco' },
+  { key:'R32_5',  a:'Ivory Coast', b:'Norway' },
+  { key:'R32_6',  a:'France', b:'Sweden' },
+  { key:'R32_7',  a:'Mexico', b:'Ecuador' },
+  { key:'R32_8',  a:'England', b:'DR Congo' },
+  { key:'R32_9',  a:'Belgium', b:'Senegal' },
+  { key:'R32_10', a:'USA', b:'Bosnia and Herzegovina' },
+  { key:'R32_11', a:'Spain', b:'Austria' },
+  { key:'R32_12', a:'Portugal', b:'Croatia' },
+  { key:'R32_13', a:'Switzerland', b:'Algeria' },
+  { key:'R32_14', a:'Australia', b:'Egypt' },
+  { key:'R32_15', a:'Argentina', b:'Cape Verde' },
+  { key:'R32_16', a:'Colombia', b:'Ghana' },
+];
+
+const ROUND_DEFS = [
+  { key:'R16', count:8,  label:'Round of 16' },
+  { key:'QF',  count:4,  label:'Quarter-finals' },
+  { key:'SF',  count:2,  label:'Semi-finals' },
+  { key:'F',   count:1,  label:'Final' },
+];
+
+let currentResults = {}; // key -> winner name string
+
+/* ---- build the team-pool for each later round from R32 names, generically ---- */
+/* Since later-round teams depend on actual results progressing, we show a free-text-like
+   select populated with ALL teams that fed into that bracket slot (both possible teams
+   from each of the two feeder matches). Admin picks whichever team actually advanced. */
+
+function feederPool(roundKey, idx){
+  // returns array of {name} candidates for this slot, derived from R32 teams in that bracket branch
+  // slot idx in a round maps to 2 slots in previous round, recursively back to R32
+  let span = 1;
+  if(roundKey === 'R16') span = 2;
+  if(roundKey === 'QF') span = 4;
+  if(roundKey === 'SF') span = 8;
+  if(roundKey === 'F') span = 16;
+  const startR32 = idx * span;
+  const pool = [];
+  for(let i=startR32; i<startR32+span; i++){
+    if(R32[i]){ pool.push(R32[i].a); pool.push(R32[i].b); }
+  }
+  return pool;
+}
+
+function buildUI(){
+  const container = document.getElementById('roundsContainer');
+  let html = '';
+
+  // R32 block
+  html += `<div class="round-block"><h2>Round of 32</h2>`;
+  R32.forEach(m => {
+    html += matchRowHtml(m.key, `${m.a} vs ${m.b}`, [m.a, m.b]);
+  });
+  html += `</div>`;
+
+  ROUND_DEFS.forEach(rd => {
+    html += `<div class="round-block"><h2>${rd.label}</h2>`;
+    for(let i=0; i<rd.count; i++){
+      const key = `${rd.key}_${i+1}`;
+      const pool = feederPool(rd.key, i);
+      const uniquePool = [...new Set(pool)];
+      html += matchRowHtml(key, `${rd.label} — Match ${i+1}`, uniquePool);
+    }
+    html += `</div>`;
+  });
+
+  container.innerHTML = html;
+
+  // attach change listeners
+  container.querySelectorAll('select[data-key]').forEach(sel => {
+    sel.addEventListener('change', () => {
+      const key = sel.getAttribute('data-key');
+      currentResults[key] = sel.value;
+      sel.closest('.match-row').classList.toggle('set', !!sel.value);
+    });
+  });
+}
+
+function matchRowHtml(key, label, options){
+  const current = currentResults[key] || '';
+  let optionsHtml = `<option value="">— Select winner —</option>`;
+  options.forEach(name => {
+    optionsHtml += `<option value="${name}" ${name===current?'selected':''}>${name}</option>`;
+  });
+  const isSet = !!current;
+  return `<div class="match-row ${isSet?'set':''}">
+      <div class="status-dot"></div>
+      <div class="match-label">${label}</div>
+      <select data-key="${key}">${optionsHtml}</select>
+    </div>`;
+}
+
+function loadExistingResults(){
+  fetch(`${SHEET_WEBHOOK_URL}?action=results`)
+    .then(r => r.json())
+    .then(data => {
+      currentResults = data || {};
+      buildUI();
+    })
+    .catch(() => {
+      buildUI(); // build with empty state if fetch fails
+    });
+}
+
+/* ---- lock screen ---- */
+document.getElementById('unlockBtn').onclick = () => {
+  const val = document.getElementById('passwordInput').value;
+  if(val === ADMIN_PASSWORD){
+    document.getElementById('lockCard').style.display = 'none';
+    document.getElementById('adminApp').style.display = 'block';
+    loadExistingResults();
+  } else {
+    document.getElementById('lockErr').style.display = 'block';
+  }
+};
+document.getElementById('passwordInput').addEventListener('keypress', e => {
+  if(e.key === 'Enter') document.getElementById('unlockBtn').click();
+});
+
+/* ---- save ---- */
+document.getElementById('saveBtn').onclick = () => {
+  const btn = document.getElementById('saveBtn');
+  const note = document.getElementById('saveNote');
+  btn.disabled = true;
+  note.className = 'save-note show';
+  note.textContent = 'Saving…';
+
+  const payload = Object.assign({ action: 'saveResult', password: ADMIN_PASSWORD }, currentResults);
+
+  fetch(SHEET_WEBHOOK_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload)
+  })
+  .then(r => r.json())
+  .then(res => {
+    btn.disabled = false;
+    if(res.result === 'success'){
+      note.className = 'save-note show success';
+      note.textContent = 'Saved! Leaderboard will reflect this now.';
+    } else {
+      note.className = 'save-note show error';
+      note.textContent = 'Error: ' + (res.message || 'could not save');
+    }
+  })
+  .catch(() => {
+    btn.disabled = false;
+    note.className = 'save-note show error';
+    note.textContent = 'Network error — check your connection and try again.';
+  });
+};
+</script>
+</body>
+</html>
