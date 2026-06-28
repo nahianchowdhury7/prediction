@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WC 2026 Knockout Predictor — EL Clasico Football Arena</title>
+<style>
+  :root{
+    --pitch-dark: #04140d;
+    --pitch: #0a2417;
+    --pitch-line: #143a26;
+    --gold: #d4af37;
+    --gold-bright: #f3d568;
+    --paper: #f4f1e6;
+    --slot-empty: #0f2c1c;
+    --slot-border: #1f4a30;
+    --text-dim: #7fa088;
+    --danger: #d4544a;
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0;}
+
+  body{
+    background: var(--pitch-dark);
+    background-image:
+      radial-gradient(ellipse at 50% -10%, rgba(212,175,55,0.08), transparent 60%),
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 2px, transparent 2px, transparent 40px);
+    color: var(--paper);
+    font-family: 'Oswald', 'Arial Narrow', sans-serif;
+    min-height: 100vh;
+    padding-bottom: 80px;
+  }
+
+  @font-face{
+    font-family:'Oswald';
+    src: local('Oswald');
+  }
+
+  /* ===== HEADER / SCOREBOARD ===== */
+  header{
+    text-align:center;
+    padding: 36px 16px 22px;
+    border-bottom: 3px solid var(--gold);
+    background: linear-gradient(180deg, rgba(212,175,55,0.06), transparent);
+  }
+  .eyebrow{
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--gold);
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  h1{
+    font-size: clamp(28px, 6vw, 52px);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin: 6px 0 8px;
+    color: var(--paper);
+    text-shadow: 0 0 30px rgba(212,175,55,0.25);
+  }
+  h1 span{ color: var(--gold-bright); }
+  .sub{
+    font-size: 14px;
+    color: var(--text-dim);
+    font-family: Georgia, serif;
+    font-style: italic;
+  }
+
+  /* progress strip */
+  .progress-wrap{
+    max-width: 640px;
+    margin: 22px auto 0;
+    padding: 0 16px;
+  }
+  .progress-track{
+    height: 6px;
+    background: var(--slot-empty);
+    border-radius: 3px;
+    overflow:hidden;
+    border: 1px solid var(--slot-border);
+  }
+  .progress-fill{
+    height:100%;
+    width:0%;
+    background: linear-gradient(90deg, var(--gold), var(--gold-bright));
+    transition: width 0.4s ease;
+  }
+  .progress-label{
+    text-align:center;
+    font-size: 12px;
+    letter-spacing:1px;
+    color: var(--text-dim);
+    margin-top: 6px;
+    text-transform: uppercase;
+  }
+
+  /* ===== ROUND NAV ===== */
+  .round-nav{
+    display:flex;
+    justify-content:center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin: 26px auto 0;
+    padding: 0 16px;
+  }
+  .round-pill{
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 8px 14px;
+    border: 1px solid var(--slot-border);
+    border-radius: 20px;
+    color: var(--text-dim);
+    background: rgba(255,255,255,0.02);
+    white-space:nowrap;
+  }
+  .round-pill.active{
+    color: var(--pitch-dark);
+    background: var(--gold);
+    border-color: var(--gold);
+    font-weight: 700;
+  }
+  .round-pill.done{
+    color: var(--gold-bright);
+    border-color: var(--gold);
+  }
+
+  /* ===== BRACKET STAGE ===== */
+  main{
+    max-width: 720px;
+    margin: 28px auto;
+    padding: 0 16px;
+  }
+
+  .round-title{
+    text-align:center;
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 18px;
+    font-weight:600;
+  }
+
+  .matches{
+    display:flex;
+    flex-direction:column;
+    gap: 14px;
+  }
+
+  .match{
+    display:grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items:center;
+    gap: 8px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+    border: 1px solid var(--pitch-line);
+    border-radius: 10px;
+    padding: 10px;
+    position:relative;
+  }
+  .match.decided{
+    border-color: rgba(212,175,55,0.4);
+  }
+
+  .vs-label{
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    font-weight:700;
+  }
+
+  .team{
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    cursor:pointer;
+    border: 2px solid transparent;
+    transition: all 0.15s ease;
+    background: rgba(255,255,255,0.02);
+  }
+  .team:hover{
+    background: rgba(212,175,55,0.08);
+    transform: translateY(-1px);
+  }
+  .team.winner{
+    border-color: var(--gold);
+    background: rgba(212,175,55,0.14);
+  }
+  .team.loser{
+    opacity: 0.35;
+  }
+  .team.empty{
+    cursor: default;
+    opacity: 0.3;
+  }
+  .team.empty:hover{ background: rgba(255,255,255,0.02); transform:none; }
+
+  .flag{
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255,255,255,0.15);
+    flex-shrink:0;
+    background: #222;
+  }
+  .team.winner .flag{ border-color: var(--gold); }
+
+  .team-name{
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    line-height:1.2;
+  }
+  .match-2 .team-name, .match-3 .team-name{}
+
+  /* second column team aligns right on wide screens */
+  .match .team:nth-of-type(2){
+    flex-direction: row-reverse;
+    text-align:right;
+  }
+
+  @media (max-width: 480px){
+    .match{ grid-template-columns: 1fr auto 1fr; padding: 8px; gap:4px;}
+    .flag{ width:28px; height:28px; }
+    .team-name{ font-size: 11px; }
+    .team{ padding:6px; gap:6px; }
+  }
+
+  /* ===== CHAMPION REVEAL ===== */
+  .champion-stage{
+    text-align:center;
+    padding: 40px 16px;
+  }
+  .trophy-emoji{
+    font-size: 64px;
+    filter: drop-shadow(0 0 24px rgba(212,175,55,0.5));
+  }
+  .champ-card{
+    margin: 20px auto;
+    max-width: 320px;
+    border: 2px solid var(--gold);
+    border-radius: 16px;
+    padding: 28px 20px;
+    background: linear-gradient(180deg, rgba(212,175,55,0.1), rgba(212,175,55,0.02));
+  }
+  .champ-card .flag{
+    width: 90px;
+    height: 90px;
+    border-width: 3px;
+    margin-bottom: 12px;
+  }
+  .champ-card .team-name{
+    font-size: 24px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .champ-label{
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--gold);
+    text-transform:uppercase;
+    margin-bottom:4px;
+  }
+
+  /* ===== FORM ===== */
+  .form-card{
+    max-width: 360px;
+    margin: 28px auto 0;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--slot-border);
+    border-radius: 14px;
+    padding: 24px;
+  }
+  .form-card label{
+    display:block;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+    margin-top: 16px;
+  }
+  .form-card label:first-of-type{ margin-top:0; }
+  .form-card input{
+    width:100%;
+    padding: 12px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--slot-border);
+    background: rgba(0,0,0,0.25);
+    color: var(--paper);
+    font-size: 15px;
+    font-family: inherit;
+  }
+  .form-card input:focus{
+    outline:none;
+    border-color: var(--gold);
+  }
+  .form-card input::placeholder{ color: rgba(255,255,255,0.25); }
+
+  .error-text{
+    color: var(--danger);
+    font-size: 12px;
+    margin-top: 6px;
+    display:none;
+  }
+
+  /* ===== BUTTONS ===== */
+  .btn-row{
+    display:flex;
+    justify-content:center;
+    gap: 12px;
+    margin-top: 26px;
+  }
+  button{
+    font-family: inherit;
+    font-size: 13px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-weight: 700;
+    padding: 13px 26px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .btn-primary{
+    background: var(--gold);
+    color: var(--pitch-dark);
+  }
+  .btn-primary:hover{ background: var(--gold-bright); }
+  .btn-primary:disabled{
+    background: var(--slot-border);
+    color: var(--text-dim);
+    cursor: not-allowed;
+  }
+  .btn-ghost{
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid var(--slot-border);
+  }
+  .btn-ghost:hover{ color: var(--paper); border-color: var(--gold); }
+
+  /* ===== SUCCESS ===== */
+  .success-box{
+    max-width: 360px;
+    margin: 20px auto 0;
+    text-align:center;
+    padding: 22px;
+    border-radius: 12px;
+    border: 1px solid var(--gold);
+    background: rgba(212,175,55,0.08);
+    display:none;
+  }
+  .success-box.show{ display:block; }
+  .success-box .check{
+    font-size: 34px;
+    margin-bottom: 8px;
+  }
+  .success-box h3{
+    color: var(--gold-bright);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-size: 16px;
+    margin-bottom: 6px;
+  }
+  .success-box p{
+    color: var(--text-dim);
+    font-size: 13px;
+  }
+
+  .submitting-note{
+    text-align:center;
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 10px;
+    display:none;
+  }
+  .submitting-note.show{ display:block; }
+
+  footer{
+    text-align:center;
+    margin-top: 50px;
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+  footer span{ color: var(--gold); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">El Clasico Football Arena Presents</div>
+  <h1>KO Stage <span>Predictor</span></h1>
+  <div class="sub">World Cup 2026 — pick your winners, round by round</div>
+
+  <div class="progress-wrap">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-label" id="progressLabel">0 of 31 picks made</div>
+  </div>
+
+  <div class="round-nav" id="roundNav"></div>
+</header>
+
+<main id="mainStage"></main>
+
+<footer>Made with <span>♥</span> by El Clasico Football Arena</footer>
+
+<script>
+/* ============== DATA ============== */
+const FLAG = c => `https://flagcdn.com/w160/${c}.png`;
+
+const R32 = [
+  { id:'r32-1',  a:{n:'South Africa', c:'za'}, b:{n:'Canada', c:'ca'} },
+  { id:'r32-2',  a:{n:'Brazil', c:'br'},        b:{n:'Japan', c:'jp'} },
+  { id:'r32-3',  a:{n:'Germany', c:'de'},       b:{n:'Paraguay', c:'py'} },
+  { id:'r32-4',  a:{n:'Netherlands', c:'nl'},   b:{n:'Morocco', c:'ma'} },
+  { id:'r32-5',  a:{n:'Ivory Coast', c:'ci'},   b:{n:'Norway', c:'no'} },
+  { id:'r32-6',  a:{n:'France', c:'fr'},        b:{n:'Sweden', c:'se'} },
+  { id:'r32-7',  a:{n:'Mexico', c:'mx'},        b:{n:'Ecuador', c:'ec'} },
+  { id:'r32-8',  a:{n:'England', c:'gb-eng'},   b:{n:'DR Congo', c:'cd'} },
+  { id:'r32-9',  a:{n:'Belgium', c:'be'},       b:{n:'Senegal', c:'sn'} },
+  { id:'r32-10', a:{n:'USA', c:'us'},           b:{n:'Bosnia and Herzegovina', c:'ba'} },
+  { id:'r32-11', a:{n:'Spain', c:'es'},         b:{n:'Austria', c:'at'} },
+  { id:'r32-12', a:{n:'Portugal', c:'pt'},      b:{n:'Croatia', c:'hr'} },
+  { id:'r32-13', a:{n:'Switzerland', c:'ch'},   b:{n:'Algeria', c:'dz'} },
+  { id:'r32-14', a:{n:'Australia', c:'au'},     b:{n:'Egypt', c:'eg'} },
+  { id:'r32-15', a:{n:'Argentina', c:'ar'},     b:{n:'Cape Verde', c:'cv'} },
+  { id:'r32-16', a:{n:'Colombia', c:'co'},      b:{n:'Ghana', c:'gh'} },
+];
+
+const ROUNDS = [
+  { key:'R32', label:'Round of 32', matchCount:16 },
+  { key:'R16', label:'Round of 16', matchCount:8 },
+  { key:'QF',  label:'Quarter-finals', matchCount:4 },
+  { key:'SF',  label:'Semi-finals', matchCount:2 },
+  { key:'F',   label:'Final', matchCount:1 },
+];
+const TOTAL_PICKS = 16+8+4+2+1; // 31
+
+/* picks[roundKey] = array of winner objects ({n,c}) or null, indexed by match position */
+const picks = { R32: Array(16).fill(null), R16: Array(8).fill(null), QF: Array(4).fill(null), SF: Array(2).fill(null), F: Array(1).fill(null) };
+let currentRoundIndex = 0;
+let champion = null;
+
+/* ============== HELPERS ============== */
+function getMatchesForRound(roundKey){
+  if(roundKey === 'R32') return R32.map(m => ({a:m.a, b:m.b}));
+  const prevKey = ROUNDS[ROUNDS.findIndex(r=>r.key===roundKey)-1].key;
+  const prevPicks = picks[prevKey];
+  const matches = [];
+  for(let i=0; i<prevPicks.length; i+=2){
+    matches.push({ a: prevPicks[i] || null, b: prevPicks[i+1] || null });
+  }
+  return matches;
+}
+
+function isRoundComplete(roundKey){
+  return picks[roundKey].every(p => p !== null);
+}
+
+function totalPicksMade(){
+  let c = 0;
+  for(const r of ROUNDS) c += picks[r.key].filter(p=>p!==null).length;
+  return c;
+}
+
+function resetDownstream(fromRoundIdx){
+  for(let i=fromRoundIdx+1; i<ROUNDS.length; i++){
+    picks[ROUNDS[i].key] = Array(ROUNDS[i].matchCount).fill(null);
+  }
+  champion = null;
+}
+
+/* ============== RENDER ============== */
+function renderNav(){
+  const nav = document.getElementById('roundNav');
+  nav.innerHTML = '';
+  ROUNDS.forEach((r, idx) => {
+    const pill = document.createElement('div');
+    pill.className = 'round-pill';
+    if(idx === currentRoundIndex) pill.className += ' active';
+    else if(isRoundComplete(r.key)) pill.className += ' done';
+    pill.textContent = r.label;
+    pill.style.cursor = (idx <= currentRoundIndex || isRoundComplete(ROUNDS[idx-1]?.key)) ? 'pointer' : 'default';
+    pill.onclick = () => {
+      // allow navigating to any round whose previous round is complete (or round 0)
+      if(idx === 0 || isRoundComplete(ROUNDS[idx-1].key)){
+        currentRoundIndex = idx;
+        render();
+      }
+    };
+    nav.appendChild(pill);
+  });
+}
+
+function renderProgress(){
+  const made = totalPicksMade();
+  document.getElementById('progressFill').style.width = (made/TOTAL_PICKS*100) + '%';
+  document.getElementById('progressLabel').textContent = `${made} of ${TOTAL_PICKS} picks made`;
+}
+
+function teamHtml(team, isWinner, isLoser, isEmpty, onClick){
+  if(isEmpty || !team){
+    return `<div class="team empty"><div class="flag" style="background:#1a1a1a"></div><div class="team-name">TBD</div></div>`;
+  }
+  let cls = 'team';
+  if(isWinner) cls += ' winner';
+  if(isLoser) cls += ' loser';
+  return `<div class="${cls}" data-action="pick">
+            <img class="flag" src="${FLAG(team.c)}" alt="${team.n} flag" loading="lazy">
+            <div class="team-name">${team.n}</div>
+          </div>`;
+}
+
+function renderRoundStage(){
+  const round = ROUNDS[currentRoundIndex];
+  const matches = getMatchesForRound(round.key);
+  const main = document.getElementById('mainStage');
+
+  let html = `<div class="round-title">${round.label} — choose your winners</div><div class="matches">`;
+
+  matches.forEach((m, idx) => {
+    const winner = picks[round.key][idx];
+    const aIsWinner = winner && m.a && winner.n === m.a.n;
+    const bIsWinner = winner && m.b && winner.n === m.b.n;
+    const aIsLoser = winner && m.a && !aIsWinner;
+    const bIsLoser = winner && m.b && !bIsWinner;
+    const bothEmpty = !m.a && !m.b;
+
+    html += `<div class="match match-${idx} ${winner?'decided':''}" data-round="${round.key}" data-idx="${idx}">
+        <div data-side="a">${teamHtml(m.a, aIsWinner, aIsLoser, !m.a)}</div>
+        <div class="vs-label">VS</div>
+        <div data-side="b">${teamHtml(m.b, bIsWinner, bIsLoser, !m.b)}</div>
+      </div>`;
+  });
+
+  html += `</div>`;
+
+  // nav buttons
+  const roundComplete = isRoundComplete(round.key);
+  const isLastRound = currentRoundIndex === ROUNDS.length - 1;
+
+  html += `<div class="btn-row">`;
+  if(currentRoundIndex > 0){
+    html += `<button class="btn-ghost" id="backBtn">← Back</button>`;
+  }
+  if(roundComplete){
+    if(isLastRound){
+      champion = picks.F[0];
+      html += `<button class="btn-primary" id="nextBtn">See Champion →</button>`;
+    } else {
+      html += `<button class="btn-primary" id="nextBtn">Next Round →</button>`;
+    }
+  }
+  html += `</div>`;
+
+  main.innerHTML = html;
+
+  // attach click handlers to teams
+  matches.forEach((m, idx) => {
+    const matchEl = main.querySelector(`.match-${idx}`);
+    if(!matchEl) return;
+    ['a','b'].forEach(side => {
+      const team = side === 'a' ? m.a : m.b;
+      if(!team) return;
+      const el = matchEl.querySelector(`[data-side="${side}"] .team`);
+      if(el){
+        el.addEventListener('click', () => {
+          picks[round.key][idx] = team;
+          resetDownstream(currentRoundIndex);
+          render();
+        });
+      }
+    });
+  });
+
+  const backBtn = document.getElementById('backBtn');
+  if(backBtn) backBtn.onclick = () => { currentRoundIndex--; render(); };
+
+  const nextBtn = document.getElementById('nextBtn');
+  if(nextBtn) nextBtn.onclick = () => {
+    if(isLastRound){
+      renderChampionStage();
+    } else {
+      currentRoundIndex++;
+      render();
+    }
+  };
+}
+
+function renderChampionStage(){
+  const main = document.getElementById('mainStage');
+  main.innerHTML = `
+    <div class="champion-stage">
+      <div class="trophy-emoji">🏆</div>
+      <div class="champ-label">Your Champion</div>
+      <div class="champ-card">
+        <img class="flag" src="${FLAG(champion.c)}" alt="${champion.n} flag">
+        <div class="team-name">${champion.n}</div>
+      </div>
+
+      <div class="form-card">
+        <label for="userName">Your Name</label>
+        <input type="text" id="userName" placeholder="e.g. Nahian">
+        <div class="error-text" id="nameErr">Please enter your name</div>
+
+        <label for="userNumber">Phone Number</label>
+        <input type="tel" id="userNumber" placeholder="e.g. 01XXXXXXXXX">
+        <div class="error-text" id="numberErr">Please enter a valid number</div>
+
+        <div class="btn-row">
+          <button class="btn-ghost" id="editBtn">← Edit Picks</button>
+          <button class="btn-primary" id="saveBtn">Save Prediction</button>
+        </div>
+        <div class="submitting-note" id="submittingNote">Saving your prediction…</div>
+        <div class="success-box" id="successBox">
+          <div class="check">✅</div>
+          <h3>Success!</h3>
+          <p>Your prediction has been saved. Good luck!</p>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('editBtn').onclick = () => {
+    currentRoundIndex = ROUNDS.length - 1;
+    render();
+  };
+
+  document.getElementById('saveBtn').onclick = handleSave;
+}
+
+function render(){
+  renderNav();
+  renderProgress();
+  renderRoundStage();
+}
+
+/* ============== SUBMIT ============== */
+const SHEET_WEBHOOK_URL = "PASTE_YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE";
+
+function buildPayload(name, number){
+  const payload = { name, number };
+  ROUNDS.forEach(r => {
+    picks[r.key].forEach((p, idx) => {
+      payload[`${r.key}_${idx+1}`] = p ? p.n : '';
+    });
+  });
+  payload['Champion'] = champion ? champion.n : '';
+  return payload;
+}
+
+function handleSave(){
+  const nameInput = document.getElementById('userName');
+  const numberInput = document.getElementById('userNumber');
+  const name = nameInput.value.trim();
+  const number = numberInput.value.trim();
+
+  let valid = true;
+  document.getElementById('nameErr').style.display = 'none';
+  document.getElementById('numberErr').style.display = 'none';
+
+  if(!name){
+    document.getElementById('nameErr').style.display = 'block';
+    valid = false;
+  }
+  if(!number || number.length < 6){
+    document.getElementById('numberErr').style.display = 'block';
+    valid = false;
+  }
+  if(!valid) return;
+
+  const saveBtn = document.getElementById('saveBtn');
+  saveBtn.disabled = true;
+  document.getElementById('submittingNote').classList.add('show');
+
+  const payload = buildPayload(name, number);
+
+  fetch(SHEET_WEBHOOK_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload)
+  })
+  .then(() => {
+    document.getElementById('submittingNote').classList.remove('show');
+    document.getElementById('successBox').classList.add('show');
+    saveBtn.style.display = 'none';
+    document.getElementById('editBtn').style.display = 'none';
+  })
+  .catch(() => {
+    document.getElementById('submittingNote').classList.remove('show');
+    saveBtn.disabled = false;
+    alert('Something went wrong saving your prediction. Please check your internet connection and try again.');
+  });
+}
+
+/* ============== INIT ============== */
+render();
+</script>
+
+</body>
+</html>
