@@ -382,6 +382,30 @@
   }
   footer span{ color: var(--red); font-weight:700; }
 
+  /* ===== BRACKET CARD MODAL ===== */
+  .bc-overlay{
+    position: fixed; inset:0; background: rgba(0,0,0,0.75);
+    display:none; align-items:center; justify-content:center;
+    z-index: 999; padding: 16px; flex-direction:column;
+  }
+  .bc-overlay.show{ display:flex; }
+  .bc-box{
+    background: var(--paper); border-radius: 14px; padding: 14px;
+    max-width: 420px; width:100%; text-align:center;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    max-height: 92vh; display:flex; flex-direction:column;
+  }
+  .bc-title{
+    font-family:'Bebas', Arial, sans-serif; font-size:18px; letter-spacing:1px;
+    text-transform:uppercase; color:var(--ink); margin-bottom:10px; font-weight:900;
+  }
+  .bc-imgwrap{ overflow:auto; border-radius:8px; border:2px solid var(--ink); margin-bottom:12px; background:#0b1d4d; }
+  .bc-imgwrap img{ width:100%; display:block; }
+  .bc-loading{ padding: 60px 10px; color: var(--ink-soft); font-size:13px; font-weight:600; }
+  .bc-btns{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+  .bc-btns button{ flex:1; min-width:110px; }
+  .bc-close{ margin-top:10px; background:transparent; border:none; color:var(--ink-soft); font-size:12px; text-decoration:underline; cursor:pointer; font-family:inherit; }
+
   /* page-turn transition */
   .page-turn-out{ animation: turnOut 0.35s ease forwards; }
   .page-turn-in{ animation: turnIn 0.4s ease backwards; }
@@ -420,6 +444,18 @@
 <main id="mainStage"></main>
 
 <footer>Made with <span>♥</span> by El Clasico Football Arena</footer>
+
+<div class="bc-overlay" id="bcOverlay">
+  <div class="bc-box">
+    <div class="bc-title">🏆 Your Prediction Card</div>
+    <div class="bc-imgwrap" id="bcImgWrap"><div class="bc-loading">Generating your bracket…</div></div>
+    <div class="bc-btns">
+      <button class="btn-primary" id="bcSaveBtn">⬇ Save</button>
+      <button class="btn-ghost" id="bcShareBtn">↗ Share</button>
+    </div>
+    <button class="bc-close" id="bcCloseBtn">Close</button>
+  </div>
+</div>
 
 <script>
 /* ============== DATA ============== */
@@ -717,6 +753,7 @@ function handleSave(){
       saveBtn.style.display = 'none';
       document.getElementById('editBtn').style.display = 'none';
       launchConfetti();
+      showBracketCard(name);
     } else if(res.message === 'duplicate_number'){
       saveBtn.disabled = false;
       document.getElementById('numberErr').textContent = 'This number has already submitted a prediction. Only one entry per number is allowed.';
@@ -732,6 +769,257 @@ function handleSave(){
     alert('Something went wrong saving your prediction. Please check your internet connection and try again.');
   });
 }
+
+/* ============== BRACKET CARD GENERATOR ============== */
+function loadImg(src){
+  return new Promise(resolve=>{
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
+}
+
+function drawCircleImg(ctx, img, cx, cy, r, ring){
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI*2);
+  ctx.closePath();
+  ctx.fillStyle = '#fff';
+  ctx.fill();
+  ctx.clip();
+  if(img) ctx.drawImage(img, cx-r, cy-r, r*2, r*2);
+  ctx.restore();
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI*2);
+  ctx.lineWidth = ring ? 4 : 2.5;
+  ctx.strokeStyle = ring || '#0d1b3d';
+  ctx.stroke();
+}
+
+function sideY(bodyTop, bodyHeight, sideCount, idx){
+  return bodyTop + (bodyHeight/sideCount) * (idx + 0.5);
+}
+
+async function generateBracketPoster(name){
+  const W = 1085, H = 1560;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  // background
+  const bgGrad = ctx.createRadialGradient(W/2, H*0.35, 50, W/2, H*0.35, W*0.9);
+  bgGrad.addColorStop(0, '#13287a');
+  bgGrad.addColorStop(1, '#060f30');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0,0,W,H);
+
+  // header
+  const logoImg = await loadImg('assets/logo.png');
+  if(logoImg) drawCircleImg(ctx, logoImg, 95, 90, 55, '#f2c14e');
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '900 50px Arial';
+  ctx.fillText('EL CLASICO FOOTBALL ARENA', 170, 78);
+  ctx.fillStyle = '#f2c14e';
+  ctx.font = '900 34px Arial';
+  ctx.fillText('ULTIMATE PREDICTOR', 170, 122);
+
+  // round label pills
+  const bodyTop = 250, bodyBottom = H - 60, bodyHeight = bodyBottom - bodyTop;
+  const colXLeft  = [80, 270, 400, 505];
+  const colXRight = [W-80, W-270, W-400, W-505];
+  const labels = ['ROUND OF 32','ROUND OF 16','QUARTER FINALS','SEMI FINALS'];
+  ctx.font = '700 14px Arial';
+  ctx.textAlign = 'center';
+  labels.forEach((lab, i) => {
+    [colXLeft[i], colXRight[i]].forEach(x => {
+      ctx.fillStyle = '#f2c14e';
+      const w = ctx.measureText(lab).width + 18;
+      ctx.fillRect(x-w/2, 178, w, 24);
+      ctx.fillStyle = '#0d1b3d';
+      ctx.fillText(lab, x, 195);
+    });
+  });
+  ctx.fillStyle = '#f2c14e';
+  const finW = ctx.measureText('FINAL').width + 26;
+  ctx.fillRect(W/2-finW/2, 178, finW, 24);
+  ctx.fillStyle = '#0d1b3d';
+  ctx.fillText('FINAL', W/2, 195);
+
+  // gather pick chains per side
+  // side: 0 = left, 1 = right
+  const roundsOrder = ['R32','R16','QF','SF'];
+  const sideData = [{},{}];
+  roundsOrder.forEach(rk => {
+    const total = picks[rk].length;
+    const half = total/2;
+    sideData[0][rk] = picks[rk].slice(0, half);
+    sideData[1][rk] = picks[rk].slice(half);
+  });
+
+  // preload all flag images used
+  const flagCache = {};
+  async function flagFor(team){
+    if(!team) return null;
+    if(!flagCache[team.c]) flagCache[team.c] = loadImg(FLAG(team.c));
+    return flagCache[team.c];
+  }
+
+  const ringColor = '#f2c14e';
+
+  for(let side=0; side<2; side++){
+    const colX = side===0 ? colXLeft : colXRight;
+    const dir = side===0 ? 1 : -1; // direction lines travel toward center
+
+    // R32: 8 matches, two stacked circles each
+    const r32 = sideData[side].R32;
+    const r32Y = []; // [{top, bot}]
+    for(let i=0;i<8;i++){
+      const cy = sideY(bodyTop, bodyHeight, 8, i);
+      const topY = cy - 26, botY = cy + 26;
+      r32Y.push({top:topY, bot:botY});
+      const m = r32[i];
+      const aImg = await flagFor(m ? m.a : null);
+      const bImg = await flagFor(m ? m.b : null);
+      const winnerIsA = picks.R32[ (side===0?i:i+8) ] && m && picks.R32[(side===0?i:i+8)].n === m.a.n;
+      drawCircleImg(ctx, aImg, colX[0], topY, 24, winnerIsA ? ringColor : '#0d1b3d');
+      drawCircleImg(ctx, bImg, colX[0], botY, 24, !winnerIsA ? ringColor : '#0d1b3d');
+    }
+
+    // subsequent rounds
+    let prevY = r32Y.map(p => ({top:p.top, bot:p.bot}));
+    let prevSideCount = 8;
+    const roundKeys = ['R16','QF','SF'];
+    let curYCenters = [];
+    for(let rIdx=0; rIdx<roundKeys.length; rIdx++){
+      const rk = roundKeys[rIdx];
+      const sideCount = prevSideCount/2;
+      const arr = sideData[side][rk];
+      curYCenters = [];
+      const x = colX[rIdx+1];
+      const prevX = colX[rIdx];
+      for(let i=0;i<sideCount;i++){
+        const cy = sideY(bodyTop, bodyHeight, sideCount, i);
+        curYCenters.push(cy);
+        // connector lines from two previous nodes
+        let p1, p2;
+        if(rIdx===0){
+          const r32GlobalIdx1 = side===0 ? i*2 : i*2+8;
+          const r32GlobalIdx2 = side===0 ? i*2+1 : i*2+9;
+          const m1 = sideData[side].R32[i*2];
+          const m2 = sideData[side].R32[i*2+1];
+          const w1 = picks.R32[r32GlobalIdx1];
+          const w2 = picks.R32[r32GlobalIdx2];
+          const w1IsA = w1 && m1 && w1.n === m1.a.n;
+          const w2IsA = w2 && m2 && w2.n === m2.a.n;
+          p1 = w1IsA ? r32Y[i*2].top : r32Y[i*2].bot;
+          p2 = w2IsA ? r32Y[i*2+1].top : r32Y[i*2+1].bot;
+        } else {
+          p1 = prevY[i*2];
+          p2 = prevY[i*2+1];
+        }
+        const midX = (prevX + x)/2;
+        ctx.strokeStyle = 'rgba(242,193,78,0.55)';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(prevX, p1); ctx.lineTo(midX, p1); ctx.lineTo(midX, cy); ctx.lineTo(x, cy);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(prevX, p2); ctx.lineTo(midX, p2); ctx.lineTo(midX, cy); ctx.lineTo(x, cy);
+        ctx.stroke();
+
+        const img = await flagFor(arr[i]);
+        drawCircleImg(ctx, img, x, cy, 26, '#0d1b3d');
+      }
+      prevY = curYCenters;
+      prevSideCount = sideCount;
+    }
+
+    // connector from each side's SF winner to center champion
+    const sfY = curYCenters[0];
+    const sfX = colX[3];
+    const midX = (sfX + W/2)/2;
+    ctx.strokeStyle = 'rgba(242,193,78,0.55)';
+    ctx.beginPath();
+    ctx.moveTo(sfX, sfY); ctx.lineTo(midX, sfY); ctx.lineTo(midX, H*0.5); ctx.lineTo(W/2, H*0.5);
+    ctx.stroke();
+  }
+
+  // champion center
+  const champImg = await flagFor(champion);
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#f2c14e';
+  ctx.font = '700 16px Arial';
+  ctx.fillText('CHAMPION', W/2, H*0.5 - 70);
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '900 42px Arial';
+  ctx.fillText((champion ? champion.n : '').toUpperCase(), W/2, H*0.5 - 32);
+  drawCircleImg(ctx, champImg, W/2, H*0.5 + 55, 60, '#f2c14e');
+
+  ctx.font = '900 60px Arial';
+  ctx.fillText('🏆', W/2, H*0.5 + 200);
+
+  // predictor name footer
+  ctx.fillStyle = '#f2c14e';
+  ctx.font = '700 20px Arial';
+  ctx.fillText('Predicted by ' + (name || 'Anonymous'), W/2, H - 22);
+
+  return canvas;
+}
+
+let lastBracketCanvas = null;
+
+async function showBracketCard(name){
+  const overlay = document.getElementById('bcOverlay');
+  const wrap = document.getElementById('bcImgWrap');
+  wrap.innerHTML = '<div class="bc-loading">Generating your bracket…</div>';
+  overlay.classList.add('show');
+  try{
+    const canvas = await generateBracketPoster(name);
+    lastBracketCanvas = canvas;
+    const dataUrl = canvas.toDataURL('image/png');
+    wrap.innerHTML = `<img src="${dataUrl}" alt="Prediction bracket">`;
+  } catch(e){
+    wrap.innerHTML = '<div class="bc-loading">Could not generate image. Please try again.</div>';
+  }
+}
+
+document.getElementById('bcCloseBtn').onclick = () => {
+  document.getElementById('bcOverlay').classList.remove('show');
+};
+
+document.getElementById('bcSaveBtn').onclick = () => {
+  if(!lastBracketCanvas) return;
+  lastBracketCanvas.toBlob(blob => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'el-clasico-wc2026-prediction.png';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+};
+
+document.getElementById('bcShareBtn').onclick = () => {
+  if(!lastBracketCanvas) return;
+  lastBracketCanvas.toBlob(async blob => {
+    const file = new File([blob], 'el-clasico-wc2026-prediction.png', { type: 'image/png' });
+    if(navigator.share && navigator.canShare && navigator.canShare({ files: [file] })){
+      try{
+        await navigator.share({ files: [file], title: 'My WC 2026 Prediction', text: 'My World Cup 2026 prediction — El Clasico Football Arena' });
+      } catch(e){ /* user cancelled */ }
+    } else {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'el-clasico-wc2026-prediction.png';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+  });
+};
 
 /* ============== INIT ============== */
 render();
