@@ -773,23 +773,11 @@ function handleSave(){
 /* ============== BRACKET CARD GENERATOR ============== */
 function loadImg(src){
   return new Promise(resolve=>{
-    fetch(src)
-      .then(r => {
-        if(!r.ok) throw new Error('fetch failed');
-        return r.blob();
-      })
-      .then(blob => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const img = new Image();
-          img.onload = () => resolve(img);
-          img.onerror = () => resolve(null);
-          img.src = reader.result;
-        };
-        reader.onerror = () => resolve(null);
-        reader.readAsDataURL(blob);
-      })
-      .catch(() => resolve(null));
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = src;
   });
 }
 
@@ -970,8 +958,14 @@ async function generateBracketPoster(name){
   ctx.fillText((champion ? champion.n : '').toUpperCase(), W/2, H*0.5 - 32);
   drawCircleImg(ctx, champImg, W/2, H*0.5 + 55, 60, '#f2c14e');
 
-  ctx.font = '900 60px Arial';
-  ctx.fillText('🏆', W/2, H*0.5 + 200);
+  const trophyImg = await loadImg('assets/trophy.png');
+  if(trophyImg){
+    const tw = 150, th = trophyImg.height * (tw / trophyImg.width);
+    ctx.drawImage(trophyImg, W/2 - tw/2, H*0.5 + 140, tw, th);
+  } else {
+    ctx.font = '900 60px Arial';
+    ctx.fillText('🏆', W/2, H*0.5 + 200);
+  }
 
   // predictor name footer
   ctx.fillStyle = '#f2c14e';
