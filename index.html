@@ -462,22 +462,32 @@
 const FLAG = c => `https://flagcdn.com/w160/${c}.png`;
 
 const R32 = [
-  { id:'r32-1',  a:{n:'South Africa', c:'za'}, b:{n:'Canada', c:'ca'} },
-  { id:'r32-2',  a:{n:'Brazil', c:'br'},        b:{n:'Japan', c:'jp'} },
-  { id:'r32-3',  a:{n:'Germany', c:'de'},       b:{n:'Paraguay', c:'py'} },
-  { id:'r32-4',  a:{n:'Netherlands', c:'nl'},   b:{n:'Morocco', c:'ma'} },
-  { id:'r32-5',  a:{n:'Ivory Coast', c:'ci'},   b:{n:'Norway', c:'no'} },
-  { id:'r32-6',  a:{n:'France', c:'fr'},        b:{n:'Sweden', c:'se'} },
-  { id:'r32-7',  a:{n:'Mexico', c:'mx'},        b:{n:'Ecuador', c:'ec'} },
-  { id:'r32-8',  a:{n:'England', c:'gb-eng'},   b:{n:'DR Congo', c:'cd'} },
-  { id:'r32-9',  a:{n:'Belgium', c:'be'},       b:{n:'Senegal', c:'sn'} },
-  { id:'r32-10', a:{n:'USA', c:'us'},           b:{n:'Bosnia and Herzegovina', c:'ba'} },
-  { id:'r32-11', a:{n:'Spain', c:'es'},         b:{n:'Austria', c:'at'} },
-  { id:'r32-12', a:{n:'Portugal', c:'pt'},      b:{n:'Croatia', c:'hr'} },
-  { id:'r32-13', a:{n:'Switzerland', c:'ch'},   b:{n:'Algeria', c:'dz'} },
-  { id:'r32-14', a:{n:'Australia', c:'au'},     b:{n:'Egypt', c:'eg'} },
-  { id:'r32-15', a:{n:'Argentina', c:'ar'},     b:{n:'Cape Verde', c:'cv'} },
-  { id:'r32-16', a:{n:'Colombia', c:'co'},      b:{n:'Ghana', c:'gh'} },
+  // ── LEFT BRACKET ──────────────────────────────────────────────────
+  // R16-1: Germany/Paraguay vs France/Sweden
+  { id:'r32-1',  a:{n:'Germany', c:'de'},       b:{n:'Paraguay', c:'py'} },
+  { id:'r32-2',  a:{n:'France', c:'fr'},         b:{n:'Sweden', c:'se'} },
+  // R16-2: South Africa/Canada vs Netherlands/Morocco
+  { id:'r32-3',  a:{n:'South Africa', c:'za'},   b:{n:'Canada', c:'ca'} },
+  { id:'r32-4',  a:{n:'Netherlands', c:'nl'},    b:{n:'Morocco', c:'ma'} },
+  // R16-5: Portugal/Croatia vs Spain/Austria
+  { id:'r32-5',  a:{n:'Portugal', c:'pt'},       b:{n:'Croatia', c:'hr'} },
+  { id:'r32-6',  a:{n:'Spain', c:'es'},          b:{n:'Austria', c:'at'} },
+  // R16-6: USA/Bosnia vs Belgium/Senegal
+  { id:'r32-7',  a:{n:'USA', c:'us'},            b:{n:'Bosnia and Herzegovina', c:'ba'} },
+  { id:'r32-8',  a:{n:'Belgium', c:'be'},        b:{n:'Senegal', c:'sn'} },
+  // ── RIGHT BRACKET ─────────────────────────────────────────────────
+  // R16-3: Brazil/Japan vs Ivory Coast/Norway
+  { id:'r32-9',  a:{n:'Brazil', c:'br'},         b:{n:'Japan', c:'jp'} },
+  { id:'r32-10', a:{n:'Ivory Coast', c:'ci'},    b:{n:'Norway', c:'no'} },
+  // R16-4: Mexico/Ecuador vs England/DR Congo
+  { id:'r32-11', a:{n:'Mexico', c:'mx'},         b:{n:'Ecuador', c:'ec'} },
+  { id:'r32-12', a:{n:'England', c:'gb-eng'},    b:{n:'DR Congo', c:'cd'} },
+  // R16-7: Argentina/Cape Verde vs Australia/Egypt
+  { id:'r32-13', a:{n:'Argentina', c:'ar'},      b:{n:'Cape Verde', c:'cv'} },
+  { id:'r32-14', a:{n:'Australia', c:'au'},      b:{n:'Egypt', c:'eg'} },
+  // R16-8: Switzerland/Algeria vs Colombia/Ghana
+  { id:'r32-15', a:{n:'Switzerland', c:'ch'},    b:{n:'Algeria', c:'dz'} },
+  { id:'r32-16', a:{n:'Colombia', c:'co'},       b:{n:'Ghana', c:'gh'} },
 ];
 
 const ROUNDS = [
