@@ -971,11 +971,36 @@ async function generateBracketPoster(name){
   ctx.fillText((champion ? champion.n : '').toUpperCase(), W/2, centerY - 38);
   drawCircleImg(ctx, await getFlag(champion), W/2, centerY + 30, 58, gold);
 
-  // trophy image
+  // trophy image — screen blend removes dark bg, shadow gives depth
   const trophyImg = await loadImg('assets/trophy.png');
   if(trophyImg){
-    const tw = 170, th = trophyImg.height * (tw / trophyImg.width);
-    ctx.drawImage(trophyImg, W/2 - tw/2, centerY + 110, tw, th);
+    const tw = 190, th = trophyImg.height * (tw / trophyImg.width);
+    const tx = W/2 - tw/2, ty = centerY + 105;
+
+    // ground shadow ellipse below trophy
+    const groundShadow = ctx.createRadialGradient(W/2, ty + th - 10, 5, W/2, ty + th - 10, 80);
+    groundShadow.addColorStop(0, 'rgba(0,0,0,0.55)');
+    groundShadow.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.save();
+    ctx.fillStyle = groundShadow;
+    ctx.beginPath();
+    ctx.ellipse(W/2, ty + th, 72, 18, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+
+    // golden ambient glow behind trophy
+    ctx.save();
+    ctx.shadowColor = 'rgba(212,175,55,0.85)';
+    ctx.shadowBlur = 48;
+    ctx.globalCompositeOperation = 'screen';
+    ctx.drawImage(trophyImg, tx, ty, tw, th);
+    ctx.restore();
+
+    // draw trophy again normally with screen — stacks brightness
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    ctx.drawImage(trophyImg, tx, ty, tw, th);
+    ctx.restore();
   }
 
   // footer
