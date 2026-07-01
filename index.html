@@ -953,36 +953,25 @@ async function generateBracketPoster(name){
   drawFlag(await gf(picks.SF[1]), CR[3],sfY,31, picks.SF[1]?gold:dark);
 
   /* ===== CENTER — FINAL ===== */
-  // SF → finalist circles (simple horizontal line)
-  hline(CL[3]+31, FLX-34, sfY);
-  drawFlag(await gf(picks.SF[0]), FLX, sfY, 36, picks.SF[0]?gold:dark);
-  hline(CR[3]-31, FRX+34, sfY);
-  drawFlag(await gf(picks.SF[1]), FRX, sfY, 36, picks.SF[1]?gold:dark);
-
-  // Finalist circles → converge down to champion
-  const convY   = sfY + 95;   // convergence point Y
-  const champTY = sfY + 130;  // CHAMPION text Y
-  const champNY = sfY + 183;  // champion name Y
-  const champFY = sfY + 278;  // champion flag center Y
-  const trophyTY = champFY + 76; // trophy top Y
+  // SF circles ARE the finalists — connect directly down to champion (no duplicate circles)
+  const convY   = sfY + 95;
+  const champTY = sfY + 128;
+  const champNY = sfY + 182;
+  const champFY = sfY + 285;
+  const trophyTY = champFY + 90;
 
   ctx.strokeStyle=lc; ctx.lineWidth=2;
-  // left finalist down + inward
+  // left SF → down + inward
   ctx.beginPath();
-  ctx.moveTo(FLX, sfY+36);
-  ctx.lineTo(FLX, convY);
-  ctx.lineTo(W/2, convY);
+  ctx.moveTo(CL[3], sfY+31); ctx.lineTo(CL[3], convY); ctx.lineTo(W/2, convY);
   ctx.stroke();
-  // right finalist down + inward
+  // right SF → down + inward
   ctx.beginPath();
-  ctx.moveTo(FRX, sfY+36);
-  ctx.lineTo(FRX, convY);
-  ctx.lineTo(W/2, convY);
+  ctx.moveTo(CR[3], sfY+31); ctx.lineTo(CR[3], convY); ctx.lineTo(W/2, convY);
   ctx.stroke();
   // vertical stem to champion
   ctx.beginPath();
-  ctx.moveTo(W/2, convY);
-  ctx.lineTo(W/2, champTY-18);
+  ctx.moveTo(W/2, convY); ctx.lineTo(W/2, champTY-18);
   ctx.stroke();
 
   // CHAMPION text
@@ -992,32 +981,19 @@ async function generateBracketPoster(name){
   ctx.fillStyle='#ffffff'; ctx.font='900 50px Arial';
   ctx.fillText((champion?.n||'').toUpperCase(), W/2, champNY);
 
-  // Champion flag (large)
-  drawFlag(await gf(champion), W/2, champFY, 62, gold);
+  // Champion flag (large) with golden glow
+  ctx.save();
+  ctx.shadowColor = 'rgba(212,175,55,0.7)';
+  ctx.shadowBlur = 38;
+  drawFlag(await gf(champion), W/2, champFY, 78, gold);
+  ctx.restore();
+  drawFlag(await gf(champion), W/2, champFY, 78, gold);
 
   /* ===== TROPHY ===== */
   const tc = await trophyCanvas();
   if(tc){
     const tw=185, th=tc.height*(tw/tc.width);
     const tx=W/2-tw/2;
-
-    // ground shadow
-    ctx.save();
-    const gs=ctx.createRadialGradient(W/2, trophyTY+th+8,2, W/2, trophyTY+th+8, 82);
-    gs.addColorStop(0,'rgba(0,0,0,0.55)');
-    gs.addColorStop(1,'rgba(0,0,0,0)');
-    ctx.fillStyle=gs;
-    ctx.beginPath(); ctx.ellipse(W/2, trophyTY+th+8, 74,17, 0,0,Math.PI*2); ctx.fill();
-    ctx.restore();
-
-    // golden aura
-    ctx.save();
-    ctx.shadowColor='rgba(212,175,55,0.95)';
-    ctx.shadowBlur=55;
-    ctx.drawImage(tc, tx, trophyTY, tw, th);
-    ctx.restore();
-
-    // trophy crisp layer
     ctx.drawImage(tc, tx, trophyTY, tw, th);
   }
 
