@@ -134,22 +134,32 @@ const SHEET_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxd-upBGaNtgO
 const ADMIN_PASSWORD = "Predictionpass1290";
 
 const R32 = [
-  { key:'R32_1',  a:'South Africa', b:'Canada' },
-  { key:'R32_2',  a:'Brazil', b:'Japan' },
-  { key:'R32_3',  a:'Germany', b:'Paraguay' },
-  { key:'R32_4',  a:'Netherlands', b:'Morocco' },
-  { key:'R32_5',  a:'Ivory Coast', b:'Norway' },
-  { key:'R32_6',  a:'France', b:'Sweden' },
-  { key:'R32_7',  a:'Mexico', b:'Ecuador' },
-  { key:'R32_8',  a:'England', b:'DR Congo' },
-  { key:'R32_9',  a:'Belgium', b:'Senegal' },
-  { key:'R32_10', a:'USA', b:'Bosnia and Herzegovina' },
-  { key:'R32_11', a:'Spain', b:'Austria' },
-  { key:'R32_12', a:'Portugal', b:'Croatia' },
-  { key:'R32_13', a:'Switzerland', b:'Algeria' },
-  { key:'R32_14', a:'Australia', b:'Egypt' },
-  { key:'R32_15', a:'Argentina', b:'Cape Verde' },
-  { key:'R32_16', a:'Colombia', b:'Ghana' },
+  // ── LEFT BRACKET ──────────────────────────────────────────────────
+  // R16-1: Germany/Paraguay vs France/Sweden
+  { key:'R32_1',  a:'Germany',               b:'Paraguay' },
+  { key:'R32_2',  a:'France',                b:'Sweden' },
+  // R16-2: South Africa/Canada vs Netherlands/Morocco
+  { key:'R32_3',  a:'South Africa',          b:'Canada' },
+  { key:'R32_4',  a:'Netherlands',           b:'Morocco' },
+  // R16-5: Portugal/Croatia vs Spain/Austria
+  { key:'R32_5',  a:'Portugal',              b:'Croatia' },
+  { key:'R32_6',  a:'Spain',                 b:'Austria' },
+  // R16-6: USA/Bosnia vs Belgium/Senegal
+  { key:'R32_7',  a:'USA',                   b:'Bosnia and Herzegovina' },
+  { key:'R32_8',  a:'Belgium',               b:'Senegal' },
+  // ── RIGHT BRACKET ─────────────────────────────────────────────────
+  // R16-3: Brazil/Japan vs Ivory Coast/Norway
+  { key:'R32_9',  a:'Brazil',                b:'Japan' },
+  { key:'R32_10', a:'Ivory Coast',           b:'Norway' },
+  // R16-4: Mexico/Ecuador vs England/DR Congo
+  { key:'R32_11', a:'Mexico',                b:'Ecuador' },
+  { key:'R32_12', a:'England',               b:'DR Congo' },
+  // R16-7: Argentina/Cape Verde vs Australia/Egypt
+  { key:'R32_13', a:'Argentina',             b:'Cape Verde' },
+  { key:'R32_14', a:'Australia',             b:'Egypt' },
+  // R16-8: Switzerland/Algeria vs Colombia/Ghana
+  { key:'R32_15', a:'Switzerland',           b:'Algeria' },
+  { key:'R32_16', a:'Colombia',              b:'Ghana' },
 ];
 
 const ROUND_DEFS = [
